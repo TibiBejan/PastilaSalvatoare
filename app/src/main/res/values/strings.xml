@@ -1,13 +1,12 @@
 <resources>
     <string name="app_name">PastilaSalvatoare</string>
-    <string name="create_pill_event">Create Pill Event</string>
+    <string name="create_pill_event">Adauga eveniment</string>
     <string name="create_event_title_placeholder">Event Title</string>
     <string name="create_event_description_placeholder">Event Description</string>
+    <string name="create_event_organizer_placeholder">Event Organizer</string>
 
-    <string name="create_event_start_date_label">Starting on:</string>
-    <string name="create_event_end_date_label">Ending on:</string>
-
-    <string name="create_event_time_label">Take at:</string>
+    <string name="create_event_date_label">Date: </string>
+    <string name="create_event_time_label">Time:</string>
 
     <string name="delete_event_btn_label">Delete event</string>
     <string name="send_message_btn_label">Send Text Message</string>

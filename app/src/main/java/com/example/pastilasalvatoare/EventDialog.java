@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatDialogFragment;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 
 public class EventDialog extends AppCompatDialogFragment {
@@ -25,8 +26,8 @@ public class EventDialog extends AppCompatDialogFragment {
     // Class State
     private EditText editTextEventTile;
     private EditText editTextEventDescription;
-    private DatePicker datePickerStartDate;
-    private DatePicker datePickerEndDate;
+    private EditText editTextEventOrganizer;
+    private DatePicker datePickerDate;
     private TimePicker timePickerTime;
     private EventDialogListener listener;
 
@@ -53,19 +54,13 @@ public class EventDialog extends AppCompatDialogFragment {
                 // Set State data on submit button click
                 String title = editTextEventTile.getText().toString();
                 String description = editTextEventDescription.getText().toString();
+                String organizer = editTextEventOrganizer.getText().toString();
 
-                // Obtain a String representation of event start date
-                String startDateDay = String.valueOf(datePickerStartDate.getDayOfMonth());
-                String startDateMonth = String.valueOf(datePickerStartDate.getMonth() + 1);
-                String startDateYear = String.valueOf(datePickerStartDate.getYear());
-                String startDate = startDateDay + "-" + startDateMonth + "-" + startDateYear;
-
-
-                // Obtain a String representation of event end date
-                String endDateDay = String.valueOf(datePickerEndDate.getDayOfMonth());
-                String endDateMonth = String.valueOf(datePickerEndDate.getMonth() + 1);
-                String endDateYear = String.valueOf(datePickerEndDate.getYear());
-                String endDate = endDateDay + "-" + endDateMonth + "-" + endDateYear;
+                // Obtain a String representation of event date
+                String startDateDay = String.valueOf(datePickerDate.getDayOfMonth());
+                String startDateMonth = String.valueOf(datePickerDate.getMonth() + 1);
+                String startDateYear = String.valueOf(datePickerDate.getYear());
+                String startDate = startDateDay + "/" + startDateMonth + "/" + startDateYear;
 
 
                 // Obtain a String representation of time from timePicker
@@ -73,8 +68,9 @@ public class EventDialog extends AppCompatDialogFragment {
                 String minutesOfDay = String.valueOf(timePickerTime.getMinute());
                 String eventTime = hourOfDay + ":" + minutesOfDay;
 
+
                 // Send user input to main activity using the created listener
-                listener.generateEvents(title, description, startDate, endDate, eventTime);
+                listener.addCalendarEvent(title, description, organizer, startDate, eventTime);
             }
         });
 
@@ -82,9 +78,9 @@ public class EventDialog extends AppCompatDialogFragment {
         // Get dialog inputs value
         editTextEventTile = view.findViewById(R.id.eventTitle);
         editTextEventDescription = view.findViewById(R.id.eventDescription);
+        editTextEventOrganizer = view.findViewById(R.id.eventOrganizer);
         timePickerTime = view.findViewById(R.id.eventTime);
-        datePickerStartDate = view.findViewById(R.id.eventStartDate);
-        datePickerEndDate = view.findViewById(R.id.eventEndDate);
+        datePickerDate = view.findViewById(R.id.eventDate);
 
 
         return builder.create();
@@ -104,6 +100,6 @@ public class EventDialog extends AppCompatDialogFragment {
     }
 
     public interface EventDialogListener {
-        void generateEvents(String title, String description, String startDate, String endDate, String eventTime);
+        void addCalendarEvent(String title, String description, String organizer, String date, String eventTime);
     }
 }

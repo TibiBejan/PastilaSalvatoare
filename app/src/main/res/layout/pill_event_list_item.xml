@@ -13,7 +13,15 @@
         android:layout_marginBottom="5dp"
         android:textSize="24dp"
         android:textStyle="bold"
-        android:text="Text"/>
+        android:text="Title"/>
+    <TextView
+        android:id="@+id/listItemOrganizer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:textSize="20dp"
+        android:textStyle="bold"
+        android:text="Organizer"/>
     <TextView
         android:id="@+id/listItemDescription"
         android:layout_width="match_parent"
@@ -21,21 +29,30 @@
         android:layout_marginBottom="5dp"
         android:textSize="20dp"
         android:textStyle="bold"
+        android:text="Description"/>
+    <TextView
+        android:id="@+id/listItemID"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:textSize="20dp"
+        android:textStyle="bold"
         android:text="Text"/>
     <TextView
-        android:id="@+id/listItemDate"
+        android:id="@+id/listItemStartDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="5dp"
         android:textSize="18dp"
-        android:text="Text"/>
+        android:text="StartDate"/>
     <TextView
-        android:id="@+id/listItemTime"
+        android:id="@+id/listItemEndDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="15dp"
+        android:layout_marginBottom="5dp"
         android:textSize="18dp"
-        android:text="Text"/>
+        android:text="EndDate"/>
+
     <Button
         android:id="@+id/listItemDeleteBTN"
         android:layout_width="wrap_content"
@@ -43,11 +60,5 @@
         android:text="@string/delete_event_btn_label"
         android:layout_marginBottom="15dp"
         />
-    <Button
-        android:id="@+id/listItemSendMessageBTN"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/send_message_btn_label"
-        android:layout_marginBottom="15dp"
-        />
+
 </LinearLayout>
