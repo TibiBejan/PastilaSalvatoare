@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.provider.AlarmClock;
 import android.provider.CalendarContract;
+import android.telephony.SmsManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CalendarView;
@@ -37,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
 
     // Calendar permissions request var
     private static final int MY_PERMISSIONS_REQUEST_WRITE_CALENDAR = 1;
+    private static final int REQUEST_CODE = 1;
 
     // Calendar Provider State
     CalendarProvider calendarProviderAccount;
@@ -105,7 +108,6 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
     }
 
 
-
     // Class method used to set calendar date
     public void setDate(int day, int month, int year) {
         calendar.set(Calendar.YEAR, year);
@@ -133,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
         }
 
         // Projection array. Creating indices for this array instead of doing dynamic lookups improves performance.
-        final String[] EVENT_PROJECTION = new String[] {
+        final String[] EVENT_PROJECTION = new String[]{
                 CalendarContract.Calendars._ID,                           // 0
                 CalendarContract.Calendars.ACCOUNT_NAME,                  // 1
                 CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,         // 2
@@ -166,12 +168,11 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
             String calendarInfo = String.format("Calendar ID: %s\nDisplay Name: %s\nAccount Name: %s\nOwner Name: %s", calID, displayName, accountName, ownerName);
             calendarInfos.add(calendarInfo);
 
-            for (String c: calendarInfos) {
+            for (String c : calendarInfos) {
                 System.out.println(c);
             }
         }
     }
-
 
 
     // Class method used to fetch all calendar instances based on user profile - google account
@@ -182,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
         }
 
         // Projection array. Creating indices for this array instead of doing dynamic lookups improves performance.
-        final String[] EVENT_PROJECTION = new String[] {
+        final String[] EVENT_PROJECTION = new String[]{
                 CalendarContract.Calendars._ID,                           // 0
                 CalendarContract.Calendars.ACCOUNT_NAME,                  // 1
                 CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,         // 2
@@ -204,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
         String selection = "((" + CalendarContract.Calendars.ACCOUNT_NAME + " = ?) AND ("
                 + CalendarContract.Calendars.ACCOUNT_TYPE + " = ?) AND ("
                 + CalendarContract.Calendars.OWNER_ACCOUNT + " = ?))";
-        String[] selectionArgs = new String[] {"proiect.pastila2023@gmail.com", "com.google", "proiect.pastila2023@gmail.com"};
+        String[] selectionArgs = new String[]{"proiect.pastila2023@gmail.com", "com.google", "proiect.pastila2023@gmail.com"};
         // Submit the query and get a Cursor object back.
 
         cur = cr.query(uri, EVENT_PROJECTION, selection, selectionArgs, null);
@@ -225,10 +226,9 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
     }
 
 
-
     // Class method to check if event with provided title already exists
     private boolean checkEventAlreadyExist(String eventTitle, LocalDate currentDate) {
-        final String[] INSTANCE_PROJECTION = new String[] {
+        final String[] INSTANCE_PROJECTION = new String[]{
                 CalendarContract.Instances.EVENT_ID,      // 0
                 CalendarContract.Instances.BEGIN,         // 1
                 CalendarContract.Instances.TITLE          // 2
@@ -248,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
         String selection = "((" + CalendarContract.Instances.TITLE + " = ?) AND ("
                 + CalendarContract.Instances.DTSTART + " = ?) AND ("
                 + CalendarContract.Instances.DTEND + " = ?))";
-        String[] selectionArgs = new String[] {eventTitle, String.valueOf(startMillis), String.valueOf(endMillis)};
+        String[] selectionArgs = new String[]{eventTitle, String.valueOf(startMillis), String.valueOf(endMillis)};
 
         // Construct the query with the desired date range.
         Uri.Builder builder = CalendarContract.Instances.CONTENT_URI.buildUpon();
@@ -256,11 +256,10 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
         ContentUris.appendId(builder, endMillis);
 
         // Submit the query
-        Cursor cur =  getContentResolver().query(builder.build(), INSTANCE_PROJECTION, selection, selectionArgs, null);
+        Cursor cur = getContentResolver().query(builder.build(), INSTANCE_PROJECTION, selection, selectionArgs, null);
 
         return cur.getCount() > 0;
     }
-
 
 
     // Class method used to create an event
@@ -293,14 +292,21 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED) {
             Uri uri = cr.insert(CalendarContract.Events.CONTENT_URI, values);
             long eventID = Long.parseLong(uri.getLastPathSegment());
+
             // Set reminder
             setReminder(cr, eventID, 15);
+
+            // Send message
+            sendMessage(startMillis, title);
+
+            // Set alarm
+            setAlarm(eventTime, title);
+
             Toast.makeText(MainActivity.this, "Event Created, the event id is: " + eventID, Toast.LENGTH_LONG).show();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.WRITE_CALENDAR}, MY_PERMISSIONS_REQUEST_WRITE_CALENDAR);
         }
     }
-
 
 
     public void setReminder(ContentResolver cr, long eventID, int timeBefore) {
@@ -320,6 +326,38 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
     }
 
 
+    public void setAlarm(String eventTime, String alarmTitle) {
+        int hour = Integer.parseInt(eventTime.split(":")[0]);
+        int minutes = Integer.parseInt(eventTime.split(":")[1]);
+
+        Intent intent = new Intent(AlarmClock.ACTION_SET_ALARM);
+
+        intent.putExtra(AlarmClock.EXTRA_HOUR, hour);
+        intent.putExtra(AlarmClock.EXTRA_MINUTES, minutes);
+        intent.putExtra(AlarmClock.EXTRA_MESSAGE, "Reminder pastila: " + alarmTitle);
+
+        startActivity(intent);
+    }
+
+
+    public void sendMessage(Long DateTime, String title) {
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(this, TextMessageReceiver.class);
+
+            // Add arguments (data) to intent
+            intent.putExtra("MessageTitle", title);
+
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, intent, PendingIntent.FLAG_IMMUTABLE);
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, DateTime, pendingIntent);
+
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, MY_PERMISSIONS_REQUEST_WRITE_CALENDAR);
+        }
+    }
+
 
     // Class method used to fetch all events based on provided date -- need parameters
     public void readEvents(String currentDate) {
@@ -327,7 +365,7 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
         // Empty the array with current events
         calendarEvents.removeAll(calendarEvents);
 
-        final String[] INSTANCE_PROJECTION = new String[] {
+        final String[] INSTANCE_PROJECTION = new String[]{
                 CalendarContract.Instances.EVENT_ID,      // 0
                 CalendarContract.Instances.DTSTART,       // 1
                 CalendarContract.Instances.DTEND,         // 2
@@ -362,7 +400,7 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
         ContentUris.appendId(builder, endMillis);
 
         // Submit the query
-        Cursor cur =  getContentResolver().query(builder.build(), INSTANCE_PROJECTION, null, null, null);
+        Cursor cur = getContentResolver().query(builder.build(), INSTANCE_PROJECTION, null, null, null);
 
         while (cur.moveToNext()) {
 
@@ -380,9 +418,6 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
     }
 
 
-
-
-
     public void addCalendarEvent(String title, String description, String organizer, String date, String eventTime) {
 
         // Generate array of dates between medication startDate and endDate
@@ -391,156 +426,15 @@ public class MainActivity extends AppCompatActivity implements EventDialog.Event
 
         addEvent(title, description, organizer, localCurrentDate, eventTime);
 
-//        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-//        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
-//        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
-//
-//        long alarmTime = System.currentTimeMillis() + 1 * 60 * 1000;
-//        alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent);
-//
-//        //        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,calendar.getTimeInMillis(),AlarmManager.INTERVAL_DAY, pendingIntent);
-//        Toast.makeText(MainActivity.this, "Alarm Set", Toast.LENGTH_SHORT).show();
-
 
         readEvents(date);
         calendarEventAdapter.notifyDataSetChanged();
     }
 
 
-
     static void removeCalendarEvent(Context context, long eventID) {
         Uri deleteUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventID);
         int rows = context.getContentResolver().delete(deleteUri, null, null);
     }
-
-
     // ---------------------------- CALENDAR PROVIDER METHODS ---------------------------- //
-
-
-    private void setAlarm(int minutes) {
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Intent alarmIntent = new Intent(this, AlarmReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
-
-        // Set the alarm to trigger after 5 minutes
-        long alarmTime = System.currentTimeMillis() + minutes * 60 * 1000;
-        alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent);
-    }
-
-
-
-
-    private void startCountdownTimer(int minutes) {
-        // Start a timer for 5 minutes
-        new CountDownTimer(minutes * 60 * 1000, 1000) {
-            public void onTick(long millisUntilFinished) {
-                // Timer is running, do nothing
-            }
-
-            public void onFinish() {
-                // Timer finished, send SMS
-                System.out.println("Pacientul nu si a luat pastilele!");
-            }
-        }.start();
-    }
-
-
-    public class AlarmReceiver extends BroadcastReceiver {
-        private static final String TAG = "alarm_test_check";
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Toast.makeText(context,"AlarmReceiver called",Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-//    @Override
-//    public void generateEvents(String title, String description, String startDate, String endDate, String eventTime) {
-//        try {
-//            // Generate array of dates between medication startDate and endDate
-//            DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd-M-yyyy");
-//
-//            LocalDate localStartDate = LocalDate.parse(startDate, dateFormat);
-//            LocalDate localEndDate = LocalDate.parse(endDate, dateFormat);
-//
-//            ArrayList<LocalDate> allDates = new ArrayList<>();
-//
-//            if (localStartDate.isAfter(localEndDate)) {
-//                throw new IllegalStateException("start date must be before or equal to end date");
-//            }
-//
-//            while (!localStartDate.isAfter(localEndDate)) {
-//                allDates.add(localStartDate);
-//                localStartDate = localStartDate.plusDays(1);
-//            }
-//            // Based on allDates array, create ArrayList of medication events
-//            for (LocalDate d : allDates) {
-//                events.add(new PillEvent(
-//                        title,
-//                        description,
-//                        d,
-//                        eventTime
-//                ));
-//            }
-////            setFilterPillEvents();
-////            pillEventAdapter.notifyDataSetChanged();
-//        }
-//        catch (IllegalStateException e) {
-//            System.out.println(e);
-//        }
-//        catch (Exception e) {
-//            System.out.println(e);
-//        }
-//    }
-
-
-
-//    public void setFilterPillEvents() {
-//
-//        // Define Date formatter
-//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-//
-//
-//        // Extract calendarView date as string
-//        long date = calendarView.getDate();
-//        String selectedDate = simpleDateFormat.format(calendar.getTime());
-//
-//
-//        // Empty Array List and populate it with current date pill events
-//        filteredEvents.removeAll(filteredEvents);
-//
-//        for(PillEvent e: events) {
-//            if (e.date.toString().equals(selectedDate)) {
-//                filteredEvents.add(e);
-//            }
-//        }
-//    }
-
-
-
-//    public static void removeListItem(int listItemIndex) {
-//        filteredEvents.remove(listItemIndex);
-//        events.remove(listItemIndex);
-//        pillEventAdapter.notifyDataSetChanged();
-//    }
-
-
-
-//    public static void sendTextMessage(String title, String description, String date, String time) {
-//        String textMessage = "Reminder: " + title + ". " + description + ". You have to take the pill on: " + date + ", at: " + time;
-//
-//        SmsManager smsManager = SmsManager.getDefault();
-//        smsManager.sendTextMessage("1-555-123-4567", null, textMessage, null, null);
-//    }
 }
